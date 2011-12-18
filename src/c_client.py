@@ -5,6 +5,7 @@ from functools import reduce
 import getopt
 import os
 import sys
+import time
 import re
 
 # Jump to the bottom of this file for the main routine
@@ -2276,8 +2277,7 @@ def _man_request(self, name, cookie_type, void, aux):
         sys.stdout.write('man/%s.3 ' % func_name)
     # Our CWD is src/, so this will end up in src/man/
     f = open('man/%s.3' % func_name, 'w')
-    # TODO: use the file modification date of the xproto?
-    f.write('.TH %s 3  %s "XCB" "XCB Requests"\n' % (func_name, 'today'))
+    f.write('.TH %s 3  %s "XCB" "XCB Requests"\n' % (func_name, today))
     # Left-adjust instead of adjusting to both sides
     f.write('.ad l\n')
     f.write('.SH NAME\n')
@@ -2357,16 +2357,16 @@ def _man_request(self, name, cookie_type, void, aux):
                 for field in b.type.fields:
                     _c_complex_field(self, field, space)
                 if b.type.has_name:
+                    print >> sys.stderr, 'ERROR: New unhandled documentation case'
                     pass
-# XXX
-                    #print 'aha with ' % b.c_field_name
-                    #_h('    } %s;', b.c_field_name)
+
         f.write('} \\fB%s\\fP;\n' % self.reply.c_type)
         f.write('.fi\n')
 
         f.write('.SS Reply function\n')
         f.write('.HP\n')
-        f.write('%s *\\fB%s\\fP(xcb_connection_t\\ *\\fIconn\\fP, %s\\ \\fIcookie\\fP, xcb_generic_error_t\\ **\\fIe\\fP);\n' %
+        f.write(('%s *\\fB%s\\fP(xcb_connection_t\\ *\\fIconn\\fP, %s\\ '
+                 '\\fIcookie\\fP, xcb_generic_error_t\\ **\\fIe\\fP);\n') %
                 (self.c_reply_type, self.c_reply_name, self.c_cookie_type))
         create_link('%s' % self.c_reply_name)
 
@@ -2377,10 +2377,9 @@ def _man_request(self, name, cookie_type, void, aux):
             elif field.prev_varsized_field is not None or not field.type.fixed_size():
                 has_accessors = True
 
-
         if has_accessors:
             f.write('.SS Reply accessors\n')
-        # TODO: create link manpage for the type and reply function name
+
         def _c_accessors_field(self, field):
             '''
             Declares the accessor functions for a non-list field that follows a variable-length field.
@@ -2596,7 +2595,6 @@ def _man_request(self, name, cookie_type, void, aux):
     # text description
     f.write('.SH DESCRIPTION\n')
     if self.doc and self.doc.description:
-        # XXX: this will probably require some formatting in the future
         desc = self.doc.description
         desc = re.sub(r'`([^`]+)`', r'\\fI\1\\fP', desc)
         lines = desc.split('\n')
@@ -2628,7 +2626,6 @@ def _man_request(self, name, cookie_type, void, aux):
         f.write('.SH EXAMPLE\n')
         f.write('.nf\n')
         f.write('.sp\n')
-        # XXX: this will probably require some formatting in the future
         lines = self.doc.example.split('\n')
         f.write('\n'.join(lines) + '\n')
         f.write('.fi\n')
@@ -2658,8 +2655,7 @@ def _man_event(self, name):
         sys.stdout.write('man/%s.3 ' % self.c_type)
     # Our CWD is src/, so this will end up in src/man/
     f = open('man/%s.3' % self.c_type, 'w')
-    # TODO: use the file modification date of the xproto?
-    f.write('.TH %s 3  %s "XCB" "XCB Events"\n' % (self.c_type, 'today'))
+    f.write('.TH %s 3  %s "XCB" "XCB Events"\n' % (self.c_type, today))
     # Left-adjust instead of adjusting to both sides
     f.write('.ad l\n')
     f.write('.SH NAME\n')
@@ -2703,9 +2699,7 @@ def _man_event(self, name):
             spacing = ' ' * (maxtypelen - len(field.c_field_type))
             f.write('%s    %s%s \\fI%s\\fP%s;\n' % (space, field.c_field_type, spacing, field.c_field_name, field.c_subscript))
         else:
-            spacing = ' ' * (maxtypelen - (len(field.c_field_type) + 1))
-            f.write('ELSE %s = %s\n' % (field.c_field_type, field.c_field_name))
-            #_h('%s    %s%s *%s%s; /**<  */', space, field.c_field_type, spacing, field.c_field_name, field.c_subscript)
+            print >> sys.stderr, 'ERROR: New unhandled documentation case'
 
     if not self.is_switch:
         for field in struct_fields:
@@ -2718,10 +2712,9 @@ def _man_event(self, name):
             for field in b.type.fields:
                 _c_complex_field(self, field, space)
             if b.type.has_name:
+                print >> sys.stderr, 'ERROR: New unhandled documentation case'
                 pass
-# XXX
-                #print 'aha with ' % b.c_field_name
-                #_h('    } %s;', b.c_field_name)
+
     f.write('} \\fB%s\\fP;\n' % self.c_type)
     f.write('.fi\n')
 
@@ -2758,7 +2751,6 @@ def _man_event(self, name):
     # text description
     f.write('.SH DESCRIPTION\n')
     if self.doc and self.doc.description:
-        # XXX: this will probably require some formatting in the future
         desc = self.doc.description
         desc = re.sub(r'`([^`]+)`', r'\\fI\1\\fP', desc)
         lines = desc.split('\n')
@@ -2768,7 +2760,6 @@ def _man_event(self, name):
         f.write('.SH EXAMPLE\n')
         f.write('.nf\n')
         f.write('.sp\n')
-        # XXX: this will probably require some formatting in the future
         lines = self.doc.example.split('\n')
         f.write('\n'.join(lines) + '\n')
         f.write('.fi\n')
@@ -2832,7 +2823,7 @@ def c_request(self, name):
             _c_request_helper(self, name, 'xcb_void_cookie_t', True, True, True)
 
     # We generate the manpage afterwards because _c_type_setup has been called.
-# TODO: aux
+    # TODO: what about aux helpers?
     cookie_type = self.c_cookie_type if self.reply else 'xcb_void_cookie_t'
     _man_request(self, name, cookie_type, not self.reply, False)
 
@@ -2921,6 +2912,8 @@ Refer to the README file in xcb/proto for more info.
 # Ensure the man subdirectory exists
 if not os.path.exists('man'):
     os.mkdir('man')
+
+today = time.strftime('%Y-%m-%d', time.gmtime(os.path.getmtime(args[0])))
 
 # Parse the xml header
 module = Module(args[0], output)
