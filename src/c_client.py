@@ -2537,6 +2537,61 @@ def _man_request(self, name, cookie_type, void, aux):
             f.write('.RE\n')
 
     # Reply reference
+    if not void:
+        f.write('.SH REPLY FIELDS\n')
+        # These fields are present in every reply:
+        f.write('.IP \\fI%s\\fP 1i\n' % 'response_type')
+        f.write(('The type of this reply, in this case \\fI%s\\fP. This field '
+                 'is also present in the \\fIxcb_generic_reply_t\\fP and can '
+                 'be used to tell replies apart from each other.\n') %
+                 _n(self.reply.name).upper())
+        f.write('.IP \\fI%s\\fP 1i\n' % 'sequence')
+        f.write('The sequence number of the last request processed by the X11 server.\n')
+        f.write('.IP \\fI%s\\fP 1i\n' % 'length')
+        f.write('The length of the reply, in words (a word is 4 bytes).\n')
+        for field in self.reply.fields:
+            if (field.c_field_name in frozenset(['response_type', 'sequence', 'length']) or
+                field.c_field_name.startswith('pad')):
+                continue
+
+            if field.type.is_list and not field.type.fixed_size():
+                continue
+            elif field.prev_varsized_field is not None or not field.type.fixed_size():
+                continue
+            f.write('.IP \\fI%s\\fP 1i\n' % (field.c_field_name))
+            printed_enum = False
+            if field.enum:
+                # XXX: why the 'xcb' prefix?
+                key = ('xcb', field.enum)
+                if key in enums:
+                    f.write('One of the following values:\n')
+                    f.write('.RS 1i\n')
+                    enum = enums[key]
+                    count = len(enum.values)
+                    for (enam, eval) in enum.values:
+                        count = count - 1
+                        f.write('.IP \\fI%s\\fP 1i\n' % (_n(key + (enam,)).upper()))
+                        if enum.doc and enam in enum.doc.fields:
+                            desc = re.sub(r'`([^`]+)`', r'\\fI\1\\fP', enum.doc.fields[enam])
+                            f.write('%s\n' % desc)
+                        else:
+                            f.write('TODO: NOT YET DOCUMENTED.\n')
+                    f.write('.RE\n')
+                    f.write('.RS 1i\n')
+                    printed_enum = True
+
+            if self.reply.doc and field.field_name in self.reply.doc.fields:
+                desc = self.reply.doc.fields[field.field_name]
+                desc = re.sub(r'`([^`]+)`', r'\\fI\1\\fP', desc)
+                if printed_enum:
+                    f.write('\n')
+                f.write('%s\n' % desc)
+            else:
+                f.write('TODO: NOT YET DOCUMENTED.\n')
+            if printed_enum:
+                f.write('.RE\n')
+
+
 
     # text description
     f.write('.SH DESCRIPTION\n')
