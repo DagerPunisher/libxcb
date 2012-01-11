@@ -2287,10 +2287,6 @@ def _man_request(self, name, cookie_type, void, aux):
     # Don't split words (hyphenate)
     f.write('.hy 0\n')
     f.write('.B #include <xcb/%s.h>\n' % _ns.header)
-    if self.doc:
-        for header in self.doc.needs_headers:
-            f.write('\n')
-            f.write('.B #include <xcb/%s>\n' % header)
 
     # function prototypes
     prototype = ''
@@ -2665,10 +2661,6 @@ def _man_event(self, name):
     # Don't split words (hyphenate)
     f.write('.hy 0\n')
     f.write('.B #include <xcb/%s.h>\n' % _ns.header)
-    if self.doc:
-        for header in self.doc.needs_headers:
-            f.write('\n')
-            f.write('.B #include <xcb/%s>\n' % header)
 
     f.write('.PP\n')
     f.write('.SS Event datastructure\n')
