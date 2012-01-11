@@ -18,6 +18,11 @@ single function which takes the necessary variables as parameters.
 
 .SH FLUSHING
 
+Flushing means calling \fIxcb_flush\fP to clear the XCB-internal write buffer
+and send all pending requests to the X11 server. You don't explicitly need to
+flush before using a reply function (like \fIxcb_query_pointer_reply\fP), but
+you do need to flush before entering the event loop of your program.
+
 Examples generally include the \fIxcb_flush\fP call where appropriate (for
 example after setting a property). Therefore, including these functions and
 calling them in your application should just work. However, you might get
