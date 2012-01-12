@@ -23,6 +23,13 @@ and send all pending requests to the X11 server. You don't explicitly need to
 flush before using a reply function (like \fIxcb_query_pointer_reply\fP), but
 you do need to flush before entering the event loop of your program.
 
+There are only two cases when XCB flushes by itself. The first case is when
+its write buffer becomes full, the second case is when you are asking for
+the reply of a request which wasn't flushed out yet (like
+\fIxcb_query_pointer_reply\fP). This last point also includes
+xcb_request_check(). Please note that waiting for an event does \fBNOT\fP
+flush.
+
 Examples generally include the \fIxcb_flush\fP call where appropriate (for
 example after setting a property). Therefore, including these functions and
 calling them in your application should just work. However, you might get
